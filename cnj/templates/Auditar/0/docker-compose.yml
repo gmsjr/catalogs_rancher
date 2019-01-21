@@ -1,0 +1,55 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  cnj-auditar-tst-pgsqldata:
+    external: true
+    driver: rancher-nfs
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  pgsql-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - cnj-auditar-tst-pgsqldata:/var/lib/postgresql/data
+    {{- end }}
+  {{- end }}
+  auditar:
+    image: ${registryAddress}:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+    environment:
+      - TZ=America/Sao_Paulo
+      - JBOSS_JDBC_URL=${jbossJdbcUrl}
+      - JBOSS_DB_USER=${jbossJdbcUser} 
+      - JBOSS_DB_PASS=${jbossJdbcPass}
+      - JBOSS_LOGIN_MODULE_PROVIDER_URL=${jbossLoginModuleProviderUrl}
+      - JBOSS_LOGIN_MODULE_binDN=${jbossLoginModulebinDN}
+      - JBOSS_LOGIN_MODULE_bindCredential=${jbossLoginModulebindCredential}
+      - JBOSS_LOGIN_MODULE_baseCtxDN=${jbossLoginModuleBindCredentialbaseCtxDN}
+      - JBOSS_LOGIN_MODULE_baseFilter=${jbossLoginModuleBaseFilter}
+      - JBOSS_LOGIN_MODULE_roleCtxDN=${jbossLoginModuleRoleCtxDN}
+      - JBOSS_LOGIN_MODULE_roleFilter=${jbossLoginModuleRoleFilter}
+      - JBOSS_LOGIN_MODULE_roleAttributeIsDN=${jbossLoginModuleRoleAttributeIsDN}
+      - JBOSS_LOGIN_MODULE_roleAttributeID=${jbossLoginModuleRoleAttributeID}
+      - JBOSS_LOGIN_MODULE_roleRecursion=${jbossLoginModuleRoleRecursion}
+      - JBOSS_LOGIN_MODULE_searchScope=${searchScope}
+      - JBOSS_JNDI=${jbossJNDI}
+  pgsql:
+    image: postgres:9.5-alpine
+    environment:
+      - DATABASE_NAME=auditar
+      - DATABASE_USER=cnj
+      - DATABASE_PASSWORD=${pwdPgsqlDatabase}
+      - POSTGRES_PASSWORD=${pwdPgsqlAuditar}
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: pgsql-data
+    volumes_from:
+      - pgsql-data

@@ -1,0 +1,147 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  bnmp-pgsql-servico:
+    external: true
+    driver: rancher-nfs
+  bnmp-pgsql-gateway:
+    external: true
+    driver: rancher-nfs
+  bnmp-elasticsearch-data:
+    driver: rancher-nfs
+    per_container: true
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  pgsql-bnmp-servico-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - bnmp-pgsql-servico:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-bnmp-servico:
+    image: basis-registry.basis.com.br/comum/pgsql-br:postgis-9.5
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-bnmp-servico-data
+    volumes_from:
+      - pgsql-bnmp-servico-data
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=bnmpv2
+      - DATABASE_USER=bnmpv2
+      - DATABASE_PASSWORD=${pwdPgsqlBnmp}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+
+  pgsql-gateway-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - bnmp-pgsql-gateway:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-gateway:
+    image: basis-registry.basis.com.br/comum/pgsql-br:postgis-9.5
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-gateway-data
+    volumes_from:
+      - pgsql-gateway-data
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=gateway
+      - DATABASE_USER=gateway
+      - DATABASE_PASSWORD=${pwdPgsqlGateway}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+  {{- end }}
+
+  bnmp-servico:
+    image: ${registryAddress}/bnmp/servico:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-bnmp-servico]
+    {{- end }}
+
+  bnmp-alertas:
+    image: ${registryAddress}/bnmp/alertas:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-bnmp-servico]
+    {{- end }}
+
+  gateway:
+    image: ${registryAddress}/bnmp/gateway:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-gateway]
+    {{- end }}
+
+  gatewayexterno:
+    image: ${registryAddress}/bnmp/gatewayexterno:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-gateway]
+    {{- end }}
+
+  cliente:
+    image: ${registryAddress}/bnmp/cliente:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - ENDERECO_API=gateway:8080
+    depends_on: [gateway]
+
+  elasticsearch:
+    image: basis-registry.basis.com.br/console/elasticsearch:2.4.2-phonetic
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+    environment:
+      TZ: America/Sao_Paulo
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g -Des.path.conf=/usr/share/elasticsearch/config -Des.cluster.name=bnmpcluster -Des.discovery.zen.minimum_master_nodes=1 -Des.discovery.zen.ping.unicast.hosts=elasticsearch"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+    - bnmp-elasticsearch-data:/usr/share/elasticsearch/data
+    {{- end }}

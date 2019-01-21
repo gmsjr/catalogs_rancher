@@ -1,0 +1,101 @@
+version: '2'
+
+volumes:
+  pje-data-01:
+    external: true
+    driver: rancher-nfs
+  pje-data-02:
+    external: true
+    driver: rancher-nfs
+services:
+  monolitico:
+    image: cnj-registry.basis.com.br/pje-status/monolitico:desenvolvimento
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT}
+    labels:
+      io.rancher.container.pull_image: always
+  monolitico-pgsql:
+    image: cnj-registry.basis.com.br/pje-status/pjestatus-postgres:desenvolvimento
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=pjestatus
+      - DATABASE_USER=pjestatus
+      - DATABASE_PASSWORD=pjestatus
+    volumes_from:
+    - monolitico-pgsql-data
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: monolitico-pgsql-data
+  heartbeat:
+    image: cnj-registry.basis.com.br/pjestatus/heartbeat:desenvolvimento
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT}
+      - URL_MONITOR=${URL_MONITOR}
+      - ID_PJE=31
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  {{- if eq .Values.elasticsearchCheck "true" }}
+  elasticsearch1:
+    image: cnj-registry.basis.com.br/pjestatus/elasticsearch:desenvolvimento
+    environment:
+      - cluster.name=pjestatus-cluster1
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  elasticsearch2:
+    image: cnj-registry.basis.com.br/pjestatus/elasticsearch:desenvolvimento
+    environment:
+      - cluster.name=pjestatus-cluster2
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  {{- end }}
+  monolitico-pgsql-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data:latest
+    volumes:
+    - pje-monolitico-pgdata:/var/lib/postgresql/data
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.container.start_once: 'true'
+  {{- if eq .Values.logstashCheck "true" }}
+  logstash1-pje:
+    image: cnj-registry.basis.com.br/logstash-pje:lastest
+    environment:
+      - ID_PJE=${ID_PJE1}
+      - ELASTICSEARCH_HOST=elasticsearch1
+      - ELASTICSEARCH_PORT=9200
+    volumes:	
+    - pje-data-01:/pje-logs
+    labels:
+      io.rancher.container.pull_image: always
+  logstash2-pje:
+    image: cnj-registry.basis.com.br/logstash-pje:lastest
+    environment:
+      - ID_PJE=${ID_PJE2}
+      - ELASTICSEARCH_PORT=9200
+      - ELASTICSEARCH_HOST=elasticsearch2
+    volumes:
+    - pje-data-02:/pje-logs
+    labels:
+      io.rancher.container.pull_image: always
+  {{- end }}
+  
+  dashboard:
+    image: cnj-registry.basis.com.br/kibana_pje:lastest
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch1:9200
+      - ELASTICSEARCH_TRIBE_URL=http://tribenode:9200
+    labels:
+      io.rancher.container.pull_image: always
+  es-sysctl:
+    labels:
+      io.rancher.container.start_once: true
+    network_mode: none
+    image: rawmind/alpine-sysctl:0.1
+    privileged: true
+    environment:
+      - SYSCTL_KEY=vm.max_map_count
+      - SYSCTL_VALUE=262144

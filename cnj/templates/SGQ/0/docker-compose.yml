@@ -1,0 +1,107 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  sgq-pgsql-servico:
+    external: true
+    driver: rancher-nfs
+  sgq-pgsql-gateway:
+    external: true
+    driver: rancher-nfs
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  pgsql-sgq-servico-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - sgq-pgsql-servico:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-sgq-servico:
+    image: postgres:9.5.5-alpine
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-sgq-servico-data
+    volumes_from:
+      - pgsql-sgq-servico-data
+    environment:
+      - DATABASE_NAME=sgqservice
+      - DATABASE_USER=sgqservice
+      - DATABASE_PASSWORD=${pwdPgsqlSgq}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+
+  pgsql-gateway-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - sgq-pgsql-gateway:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-gateway:
+    image: postgres:9.5.5-alpine
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-gateway-data
+    volumes_from:
+      - pgsql-gateway-data
+    environment:
+      - DATABASE_NAME=gateway
+      - DATABASE_USER=gateway
+      - DATABASE_PASSWORD=${pwdPgsqlGateway}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+  {{- end }}
+
+  sgq-servico:
+    image: ${registryAddress}/sgq/servico:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-sgq-servico]
+    {{- end }}
+
+  gateway:
+    image: ${registryAddress}/sgq/gateway:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-gateway]
+    {{- end }}
+
+  cliente:
+    image: ${registryAddress}/sgq/cliente:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - ENDERECO_API=gateway:8080
+    depends_on: [gateway]
+
+  elasticsearch:
+    image: elasticsearch:2.4.2
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo

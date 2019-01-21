@@ -1,0 +1,72 @@
+version: '2'
+catalog:
+  name: PJE-Status-Filiais
+  version: 0.0.1
+  description: Versão inicial
+  questions:
+    - variable: ELASTICSEARCH_HOST
+      label: Endereço do Elastic Search
+      description: Endereço do Elastic Search
+      default: elasticsearch1
+      required: true
+      type: string
+    - variable: ELASTICSEARCH_PORT
+      label: Porta para conexão
+      description: Porta para conexão com o Elasticsearch
+      default: 9200
+      required: true
+      type: string
+    - variable: URL_MONITOR
+      label: URL para monitoração
+      description: URL para monitoração
+      default: http://pjestatus.tst.basis.com.br
+      required: true
+      type: string
+    - variable: logstashCheck
+      label: Usar Logstash externo
+      description: Se os serviços não utilizarem logstash externo, desmarcar esta caixa.
+      default: false
+      required: true
+      type: boolean
+    - variable: elasticsearchCheck
+      label: Usar elasticsearch externo
+      description: Se os serviços não utilizarem elasticsearch externo, desmarcar esta caixa.
+      default: false
+      required: true
+      type: boolean
+    - variable: ID_PJE1
+      label: ID do PJE
+      description: ID do PJE a ter os logs analisados.
+      default: 31
+      required: true
+      type: string
+    - variable: ID_PJE2
+      label: ID do PJE
+      description: ID do PJE a ter os logs analisados.
+      default: 32
+      required: true
+      type: string	
+    - variable: cluster.name
+      label: Nome do cluster
+      description: Nome do cluster a ser monitorado.
+      default: pjestatus-cluster1
+      required: true
+      type: string
+    - variable: ELASTICSEARCH_URL
+      label: URL do Elastic Search
+      description: URL do Elastic Search
+      default:  http://elasticsearch1:9200
+      required: true
+      type: string
+    - variable: pjeData01 
+      label: Volume de logs a ser utilizado pelo Logstash-01
+      description: Volume Logs Logstash01
+      default:  pje-data-01
+      required: true
+      type: string
+    - variable: pjeData02
+      label: Volume de logs a ser utilizado pelo Logstash-02
+      description: Volume Logs Logstash02
+      default:  pje-data-02
+      required: true
+      type: string

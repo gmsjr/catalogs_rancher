@@ -1,0 +1,113 @@
+version: '2'
+
+volumes:
+  pje-monolitico-pgdata:
+    external: true
+    driver: rancher-nfs
+  pje_logstash_pje32:
+    external: true
+    driver: rancher-nfs
+  pje_logstash_pje31:
+    external: true
+    driver: rancher-nfs
+services:
+  fileserver:
+    image: hacdias/filemanager
+    stdin_open: true
+    volumes:
+    - pje_logstash_pje31:/srv/PJE-31
+    - pje_logstash_pje32:/srv/PJE-32
+    labels:
+      io.rancher.container.pull_image: always
+  monolitico-pgsql:
+    image: cnj-registry.basis.com.br/pje-status/pjestatus-postgres:desenvolvimento
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=pjestatus
+      - DATABASE_USER=pjestatus
+      - DATABASE_PASSWORD=pjestatus
+    volumes_from:
+    - monolitico-pgsql-data
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: monolitico-pgsql-data
+  tribenode:
+    image: cnj-registry.basis.com.br/pjestatus/tribenode:desenvolvimento
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  heartbeat:
+    image: cnj-registry.basis.com.br/pjestatus/heartbeat:desenvolvimento
+    environment:
+      ELASTICSEARCH_HOST: elasticsearch1
+      ELASTICSEARCH_PORT: '9200'
+      URL_MONITOR: http://pjestatus.tst.basis.com.br
+      ID_PJE: '31'
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  elasticsearch1:
+    image: cnj-registry.basis.com.br/pjestatus/elasticsearch:desenvolvimento
+    environment:
+      cluster.name: pjestatus-cluster1
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  elasticsearch2:
+    image: cnj-registry.basis.com.br/pjestatus/elasticsearch:desenvolvimento
+    environment:
+      cluster.name: pjestatus-cluster2
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.sidekicks: es-sysctl
+  monolitico-pgsql-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data:latest
+    volumes:
+    - pje-monolitico-pgdata:/var/lib/postgresql/data
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.container.start_once: 'true'
+  logstash-pje31:
+    image: cnj-registry.basis.com.br/logstash-pje:lastest
+    environment:
+      ID_PJE: '31'
+      ELASTICSEARCH_HOST: elasticsearch1
+      ELASTICSEARCH_PORT: '9200'
+    volumes:	
+    - pje_logstash_pje31:/pje-logs
+    labels:
+      io.rancher.container.pull_image: always
+  monolitico:
+    image: cnj-registry.basis.com.br/pje-status/monolitico:desenvolvimento
+    environment:
+      JHIPSTER_SLEEP: '5'
+      SPRING_CLOUD_CONFIG_URI: http://admin:Reg2017BASIS@registry.cnj-discovery:8761/config
+      TZ: America/Sao_Paulo
+    labels:
+      io.rancher.container.pull_image: always
+  dashboard:
+    image: cnj-registry.basis.com.br/kibana_pje:lastest
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch1:9200
+      ELASTICSEARCH_TRIBE_URL: http://tribenode:9200
+    labels:
+      io.rancher.container.pull_image: always
+  logstash-pje32:
+    image: cnj-registry.basis.com.br/logstash-pje:lastest
+    environment:
+      ID_PJE: '32'
+      ELASTICSEARCH_PORT: '9200'
+      ELASTICSEARCH_HOST: elasticsearch2
+    volumes:
+    - pje_logstash_pje32:/pje-logs
+    labels:
+      io.rancher.container.pull_image: always 
+  es-sysctl:
+    labels:
+      io.rancher.container.start_once: true
+    network_mode: none
+    image: rawmind/alpine-sysctl:0.1
+    privileged: true
+    environment:
+      SYSCTL_KEY: vm.max_map_count
+      SYSCTL_VALUE: '262144'

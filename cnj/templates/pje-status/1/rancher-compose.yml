@@ -1,0 +1,42 @@
+version: '2'
+catalog:
+  name: PJE-Status
+  version: 0.0.2
+  description: Versão inicial
+  questions:
+    - variable: ELASTICSEARCH_HOST
+      label: Endereço do Elastic Search
+      description: Endereço do Elastic Search
+      default: elasticsearch1
+      required: true
+      type: string
+    - variable: ELASTICSEARCH_PORT
+      label: Porta para conexão
+      description: Porta para conexão com o Elasticsearch
+      default: 9200
+      required: true
+      type: string
+    - variable: URL_MONITOR
+      label: URL para monitoração
+      description: URL para monitoração
+      default: http://pjestatus.tst.basis.com.br
+      required: true
+      type: string
+    - variable: cluster.name
+      label: Nome do cluster
+      description: Nome do cluster a ser monitorado.
+      default: pjestatus-cluster1
+      required: true
+      type: string
+    - variable: ELASTICSEARCH_URL
+      label: URL do Elastic Search
+      description: URL do Elastic Search
+      default:  http://elasticsearch1:9200
+      required: true
+      type: string
+    - variable: ELASTICSEARCH_TRIBE_URL
+      label: URL do Tribe Node
+      description: URL do Tribe Node
+      default: http://tribenode:9200
+      required: true
+      type: string

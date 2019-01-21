@@ -1,0 +1,55 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  faleconosco-mysql:
+    external: true
+    driver: rancher-nfs
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  mysql-faleconosco:
+    image: mysql:5.7
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - MYSQL_DATABASE=${fc_database_name}
+      - MYSQL_USER=${fc_database_user}
+      - MYSQL_PASSWORD=${pwdMysqlFC}
+      - MYSQL_ROOT_PASSWORD=${pwdMysql}
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - faleconosco-mysql:/var/lib/mysql
+    {{- end }}
+  {{- end }}
+
+  faleconosco:
+    image: ${registryAddress}/faleconosco/faleconosco:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - database_host=${fc_database_host}
+      - database_port=${fc_database_port}
+      - database_name=${fc_database_name}
+      - database_user=${fc_database_user}
+      - database_password=${pwdMysqlFC}
+      - mailer_host=${fc_mailer_host}
+      - mailer_user=${fc_mailer_user}
+      - mailer_password=${fc_mailer_password}
+      - frontend_login_url=${fc_frontend_login_url}
+      - frontend_login_success_url=${fc_frontend_login_success_url}
+      - sca_access_token_url=${fc_sca_access_token_url}
+      - sca_authorization_url=${fc_sca_authorization_url}
+      - sca_infos_url=${fc_sca_infos_url}
+      - sca_logout_url=${fc_sca_logout_url}
+      - sca_client_id=${fc_sca_client_id}
+      - sca_client_secret=${fc_sca_client_secret}
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [mysql-faleconosco]
+    {{- end }}

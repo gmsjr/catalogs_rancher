@@ -1,0 +1,50 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  notificacao-pgsql-servico:
+    external: true
+    driver: rancher-nfs
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  pgsql-notificacao-servico-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - notificacao-pgsql-servico:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-notificacao-servico:
+    image: postgres:9.5.5-alpine
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-notificacao-servico-data
+    volumes_from:
+      - pgsql-notificacao-servico-data
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=notificacaoservice
+      - DATABASE_USER=notificacaoservice
+      - DATABASE_PASSWORD=${pwdPgsqlNotificacao}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+  {{- end }}
+
+  notificacao-servico:
+    image: ${registryAddress}/notificacao/servico:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-notificacao-servico]
+    {{- end }}

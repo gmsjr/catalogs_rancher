@@ -1,0 +1,130 @@
+version: '2'
+catalog:
+  name: FaleConosco
+  version: 0.0.2
+  description: Versão com PostgreSQL
+  questions:
+    - variable: registryAddress
+      label: Endereço do Docker-Registry
+      description: URL do Docker-Registry
+      default: cnj-registry.basis.com.br
+      required: true
+      type: string
+    - variable: tagRegistry
+      label: Tag da Imagem
+      description: Tag das imagens Docker na Docker-Registry
+      default: latest
+      required: true
+      type: string
+    - variable: createDatabase
+      label: Criar o Banco de Dados
+      description: Se o bancos de dados for interno ao docker, marcar esta caixa
+      default: true
+      required: true
+      type: boolean
+    - variable: nfsCheck
+      label: Usar NFS
+      description: Se o volume do banco utilizar NFS, marcar esta caixa
+      default: false
+      required: true
+      type: boolean
+    - variable: fc_database_host
+      label: Host do banco PostgreSQL
+      description: Host do banco de dados do FaleConosco
+      default: pgsql-faleconosco
+      required: true
+      type: string
+    - variable: fc_database_port
+      label: Porta do banco PostgreSQL
+      description: Porta do banco de dados do FaleConosco
+      default: 5432
+      required: true
+      type: string
+    - variable: fc_database_name
+      label: Nome do banco PostgreSQL
+      description: Nome do banco de dados do FaleConosco
+      default: faleconosco
+      required: true
+      type: string
+    - variable: fc_database_user
+      label: Usuário do banco PostgreSQL
+      description: Usuário do banco de dados do FaleConosco
+      default: faleconosco
+      required: true
+      type: string
+    - variable: pwdPgsqlFC
+      label: Senha do banco FaleConosco
+      description: Senha do usuário do banco de dados do FaleConosco
+      default: faleconosco
+      required: true
+      type: password
+    - variable: pwdPgsql
+      label: Senha do banco (usuário postgres)
+      description: Senha do usuário postgres do banco de dados do FaleConosco
+      default: change_it
+      required: true
+      type: password
+    - variable: fc_mailer_host
+      label: Host SMTP
+      description: Host do serviço SMTP para e-mail
+      default: 127.0.0.1
+      required: true
+      type: string
+    - variable: fc_mailer_user
+      label: Usuário SMTP
+      description: Usuário do serviço SMTP para e-mail
+      required: false
+      type: string
+    - variable: fc_mailer_password
+      label: Senha SMTP
+      description: Senha do usuário de serviço SMTP para e-mail
+      required: false
+      type: password
+    - variable: fc_frontend_login_url
+      label: Frontend Login URL
+      description: Frontend Login URL
+      default: http://cnj-fc-host
+      required: true
+      type: string
+    - variable: fc_frontend_login_success_url
+      label: Frontend Login Success URL
+      description: Frontend Login Success URL
+      default: http://cnj-fc-host/#/login-success
+      required: true
+      type: string
+    - variable: fc_sca_access_token_url
+      label: FC SCA Access Token
+      description: FC SCA Access Token
+      default: https://cnj-sso-host/cas/oauth2.0/accessToken
+      required: true
+      type: string
+    - variable: fc_sca_authorization_url
+      label: FC SCA Authorization URL
+      description: FC SCA Authorization URL
+      default: https://cnj-sso-host/cas/oauth2.0/authorize
+      required: true
+      type: string
+    - variable: fc_sca_infos_url
+      label: FC SCA Infos URL
+      description: FC SCA Infos URL
+      default: https://cnj-sso-host/cas/oauth2.0/profile
+      required: true
+      type: string
+    - variable: fc_sca_logout_url
+      label: FC SCA Logout URL
+      description: FC SCA Logout URL
+      default: https://cnj-sso-host/cas/logout
+      required: true
+      type: string
+    - variable: fc_sca_client_id
+      label: FC SCA Client ID
+      description: FC SCA Client ID
+      default: fc
+      required: true
+      type: string
+    - variable: fc_sca_client_secret
+      label: FC SCA Client Secret
+      description: FC SCA Client Secret
+      default: LxmWVVNofRNAVHuQ
+      required: true
+      type: string

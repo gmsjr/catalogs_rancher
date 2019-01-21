@@ -1,0 +1,5 @@
+name: Elasticsearch Phonetic
+description: |
+  Esta catalogo cria um stack pronta, um cluster elasticsearch com plugin phonetic, necessário para o BNMP!
+version: 2.4.3-rancher1
+category: ELK

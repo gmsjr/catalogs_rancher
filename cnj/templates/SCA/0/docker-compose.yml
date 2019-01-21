@@ -1,0 +1,131 @@
+version: '2'
+
+{{- if eq .Values.nfsCheck "true" }}
+volumes:
+  sca-pgsql-servico:
+    external: true
+    driver: rancher-nfs
+  sca-pgsql-gateway:
+    external: true
+    driver: rancher-nfs
+{{- end }}
+
+services:
+  {{- if eq .Values.createDatabase "true" }}
+  pgsql-sca-servico-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - sca-pgsql-servico:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-sca-servico:
+    image: postgres:9.5.5-alpine
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-sca-servico-data
+    volumes_from:
+      - pgsql-sca-servico-data
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=scaservice
+      - DATABASE_USER=scaservice
+      - DATABASE_PASSWORD=${pwdPgsqlSca}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+
+  pgsql-gateway-data:
+    image: basis-registry.basis.com.br/postgres/pgsql-data
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.start_once: "true"
+    {{- if eq .Values.nfsCheck "true" }}
+    volumes:
+      - sca-pgsql-gateway:/var/lib/postgresql/data
+    {{- end }}
+
+  pgsql-gateway:
+    image: postgres:9.5.5-alpine
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+      io.rancher.sidekicks: pgsql-gateway-data
+    volumes_from:
+      - pgsql-gateway-data
+    environment:
+      - TZ=America/Sao_Paulo
+      - DATABASE_NAME=gateway
+      - DATABASE_USER=gateway
+      - DATABASE_PASSWORD=${pwdPgsqlGateway}
+      - POSTGRES_PASSWORD=${pwdPgsql}
+  {{- end }}
+
+  sso:
+    image: ${registryAddress}/sca/sso:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://admin:${registryPassword}@${urlRegistry}:8761/eureka/
+      - SSO_JDBC_URL=jdbc:postgresql://pgsql-sca-servico:5432/scaservice
+      - SSO_JDBC_USERNAME=scaservice
+      - SSO_JDBC_PASSWORD=${pwdPgsqlSca}
+      - CAS_SERVER_NAME=${casServerName}
+      - CAS_SERVER_PREFIX=${casServerPrefix}
+      - SPRING_PROFILES_ACTIVE=prod,native
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-sca-servico]
+    {{- end }}
+
+  sca-servico:
+    image: ${registryAddress}/sca/servico:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+    depends_on:
+      {{- if eq .Values.createDatabase "true" }}
+      - pgsql-sca-servico
+      {{- end }}
+      - elasticsearch
+
+  gateway:
+    image: ${registryAddress}/sca/gateway:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - JHIPSTER_SLEEP=30
+      - SPRING_CLOUD_CONFIG_URI=http://admin:${registryPassword}@${urlRegistry}:8761/config
+    {{- if eq .Values.createDatabase "true" }}
+    depends_on: [pgsql-gateway]
+    {{- end }}
+
+  cliente:
+    image: ${registryAddress}/sca/cliente:${tagRegistry}
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.container.pull_image: always
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo
+      - ENDERECO_API=gateway:8080
+    depends_on: [gateway]
+
+  elasticsearch:
+    image: elasticsearch:2.4.2
+    labels:
+      io.rancher.container.hostname_override: container_name
+      io.rancher.customer: cnj
+    environment:
+      - TZ=America/Sao_Paulo

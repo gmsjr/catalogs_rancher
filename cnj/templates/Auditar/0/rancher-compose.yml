@@ -1,0 +1,131 @@
+version: '2'
+catalog:
+  name: Auditar
+  version: 0.0.1
+  description: Versão inicial
+  questions:
+    - variable: registryAddress
+      label: Endereço do Docker-Registry
+      description: URL do Docker-Registry
+      default: cnj-registry.basis.com.br
+      required: true
+      type: string
+    - variable: tagRegistry
+      label: Tag da Imagem
+      description: Tag das imagens Docker na Docker-Registry
+      default: latest
+      required: true
+      type: string
+    - variable: createDatabase
+      label: Criar o Banco de Dados
+      description: Se o bancos de dados for interno ao docker, marcar esta caixa
+      default: true
+      required: true
+      type: boolean
+    - variable: nfsCheck
+      label: Usar NFS
+      description: Se o volume do banco utilizar NFS, marcar esta caixa
+      default: false
+      required: true
+      type: boolean
+    - variable: pwdPgsqlDatabase
+      label: Senha banco Database
+      description: Senha do usuário do banco de dados de gateway
+      default: database
+      required: true
+      type: password
+    - variable: pwdPgsqlAuditar
+      label: Senha banco (usuário postgres)
+      description: Senha do usuário postgres do banco de dados
+      default: change_it
+      required: true
+      type: password
+    - variable: jbossJdbcUrl
+      label: URL Jboss JDBC
+      description: Endereco do JDBC - Jboss
+      default: jdbc:postgresql://pgsql:5432/auditar
+      required: true
+      type: string
+    - variable: jbossJdbcUser
+      label: Usuário Jboss
+      description: Usuario de acesso Jboss 
+      default: user
+      required: true
+      type: string
+    - variable: jbossJdbcPass
+      label: Senha de acesso jboss
+      description: Senha Jboss
+      default: password
+      required: true
+      type: password
+    - variable: jbossLoginModuleProviderUrl
+      label: URL do Ldap 
+      description: Url de acesso Ldap
+      default: ldap://xxx.xx.x.xx:xxx
+      required: true
+      type: string
+    - variable: jbossLoginModulebinDN
+      label: Usuario para conexao Ldap
+      description: configuracoes de usuarios do ldap
+      default: cn=usuarios,dc=desenv,dc=xxx, dc=xxx
+      required: true
+      type: string
+    - variable: jbossLoginModulebindCredential
+      label: Senha do Ldap
+      description: Senha para conectar Ldap/AD. 
+      default: password
+      required: true
+      type: password
+    - variable: jbossLoginModuleBindCredentialbaseCtxDN
+      label: Pesquisas de Usuario no Ldap
+      description: Pesquisa de usuarios ldap 
+      default: texto de pesquisa
+      required: true 
+      type: string
+    - variable: jbossLoginModuleBaseFilter
+      label: Filtro Ldap
+      description: Filtro Ldap para usuarios
+      default: texto de pesquisa
+      required: true 
+      type: string
+    - variable: jbossLoginModuleRoleCtxDN
+      label: Regras ldap para usuarios
+      description: Aplicacao de regras para usuarios
+      default: cn=users
+      required: true
+      type: string
+    - variable: jbossLoginModuleRoleFilter
+      label: Pesquisa de usuarios com regras 
+      description: Filtro de regras para usuarios
+      default: Regras
+      required: true
+      type: string
+    - variable: jbossLoginModuleRoleAttributeIsDN
+      label: Usa o Distinguished Name como nome do grupo?
+      description: Caso seja true, o Distinguished é usado como nome de grupo
+      default: 'false' 
+      required: true
+      type: boolean
+    - variable: jbossLoginModuleRoleAttributeID 
+      label: Regras para um usuario ou um grupo especifico?
+      description: Atribuicao de regras para um grupo ou usuario especifico. 
+      default: CN=usuarios
+      required: false
+      type: string
+    - variable: jbossLoginModuleRoleRecursion
+      label: Qual nivel de pesquisa de regras? 
+      description: O quão profunda a pesquisa ira abaixo, comecando por um contexto de 0 
+      default: '0'
+      required: false
+      type: string
+    - variable: jbossJNDI
+      label: JBOSS_JDBC_JNDI
+      default: '"java:/jdbc/auditar"'
+      type: string
+    - variable: searchScope
+      label: Definicao de escopo de pesquisa ldap
+      description: Define o escopo de pesquisa para uma string
+      default: SUBTREE_SCOPE
+      required: false
+      type: string
+

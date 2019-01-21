@@ -1,0 +1,70 @@
+version: '2'
+catalog:
+  name: SCA - Sistema de Controle de Acesso
+  version: 0.1.1
+  description: Stack para o Sistema de Controle de Acesso do CNJ. 
+  questions:
+    - variable: urlRegistry
+      label: URL Registry
+      description: URL da JHipster Registry para AutoDiscovery e Configuração centralizada
+      default: registry.discovery
+      required: true
+      type: string
+    - variable: registryPassword
+      label: Senha registry (usuário admin)
+      description: Senha para acesso à interface e API da JHipster Registry
+      default: admin
+      required: true
+      type: password
+    - variable: registryAddress
+      label: Endereço do Docker-Registry
+      description: URL do Docker-Registry
+      default: cnj-registry.basis.com.br
+      required: true
+      type: string
+    - variable: tagRegistry
+      label: Tag da Imagem
+      description: Tag das imagens Docker na Docker-Registry
+      default: latest
+      required: true
+      type: string
+    - variable: nfsCheck
+      label: Usar NFS
+      description: Se os serviços não utilizarem volumes NFS, desmarcar esta caixa.
+      default: true
+      required: true
+      type: boolean
+    - variable: createDatabase
+      label: Criar os Bancos de Dados?
+      description: Alguns ambientes não utilizarão banco de dados em container.
+      default: true
+      required: true
+      type: boolean
+    - variable: pwdPgsql
+      label: Senha banco (usuário postgres)
+      description: Senha do usuário postgres do banco de dados
+      default: change_it
+      required: true
+      type: password
+    - variable: pwdPgsqlGateway
+      label: Senha banco (usuário gateway)
+      description: Senha do usuário do banco de dados de gateway
+      default: gateway
+      required: true
+      type: password
+    - variable: pwdPgsqlSca
+      label: Senha banco (usuário scaservice)
+      description: Senha do usuário do banco de dados do sca
+      default: scaservice
+      required: true
+      type: password
+    - variable: casServerName
+      label: Nome do Servidor CAS
+      default: https://sso
+      required: true
+      type: string
+    - variable: casServerPrefix
+      label: Prefixo do Servidor CAS
+      default: https://sso/cas
+      required: true
+      type: string
